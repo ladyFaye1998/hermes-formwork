@@ -1,6 +1,6 @@
 # External PDF test sources
 
-Formwork's distributable demo should use original fixtures with fictional content. The files below are small, public upstream regression examples for additional compatibility checks. They have been downloaded into memory and inspected with `pypdf`; no third-party PDF binary has been committed here.
+Formwork's distributable demo uses original fixtures with fictional content. The files below are small, public upstream regression examples used for local compatibility checks; no third-party PDF binary has been committed here.
 
 ## Three AcroForm text examples
 
@@ -20,11 +20,11 @@ The upstream [choice-widget example](https://github.com/mozilla/pdf.js/blob/mast
 
 ## Additional compatibility probes
 
-- The official [OPM SF-182 training form](https://www.opm.gov/forms/pdf_fill/sf182.pdf) was readable, with nine pages and 88 field-tree entries, including text, choices, buttons, and signatures. It did not contain XFA in the inspected download. The signature fields put it outside Formwork's initial accepted scope.
+- The official [OPM SF-182 training form](https://www.opm.gov/forms/pdf_fill/sf182.pdf) was readable, with nine pages and 88 field-tree entries, including text, choices, buttons, and signatures. It did not contain XFA in the inspected download. The current engine preserves empty signature widgets, but this form is still refused because of unsupported pushbuttons and interactive formatting actions.
 - The official [IRS W-9](https://www.irs.gov/pub/irs-pdf/fw9.pdf) contained both AcroForm fields and XFA in the inspected download. It is a rejection case, not a supported-form example.
-- The [pdf-lib character-sheet example](https://pdf-lib.js.org/assets/dod_character.pdf) had one page and 14 text/button fields, without XFA. This is an additional independent compatibility candidate, not an original Formwork fixture. Its file-specific redistribution terms have not been verified.
+- The [pdf-lib character-sheet example](https://pdf-lib.js.org/assets/dod_character.pdf) had one page and 14 text/button fields, without XFA. It was refused because of its image-upload pushbuttons and interactive actions. It is not an original Formwork fixture, and its file-specific redistribution terms have not been verified.
 
-These downloads were inspected in memory only. Do not commit or redistribute them on the basis of this compatibility note.
+The three Mozilla text examples were also filled and their rendered results inspected locally. Do not commit or redistribute upstream PDFs on the basis of this compatibility note alone.
 
 ## Licensing and reproducibility
 

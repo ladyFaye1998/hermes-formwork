@@ -17,4 +17,4 @@ output/
 dist/
 *.egg-info/
 node_modules/
-submission/private/
+/submission/

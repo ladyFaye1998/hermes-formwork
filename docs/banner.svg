@@ -1,0 +1,111 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" fill="none" role="img" aria-labelledby="title description">
+  <title id="title">Formwork — the answers were already there.</title>
+  <desc id="description">An illustrated workflow for Formwork, a Hermes Desktop plugin: original PDF forms, source-linked answers reviewed by you, and verified exports. This is a product diagram, not a screenshot.</desc>
+  <defs>
+    <linearGradient id="background" x1="0" y1="0" x2="1200" y2="630" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FAF9F6"/>
+      <stop offset="1" stop-color="#F4F0F5"/>
+    </linearGradient>
+    <linearGradient id="paper" x1="0" y1="0" x2="0" y2="245" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#FDFBFE"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="155%" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="7" stdDeviation="12" flood-color="#35243D" flood-opacity=".055"/>
+    </filter>
+    <style>
+      text { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; }
+      .serif { font-family: Georgia, 'Times New Roman', serif; }
+      .eyebrow { font-size: 10px; font-weight: 600; letter-spacing: 1.65px; }
+      .ink { fill: #282532; }
+      .muted { fill: #78747E; }
+      .plum { fill: #654666; }
+      .green { fill: #317360; }
+    </style>
+  </defs>
+
+  <rect width="1200" height="630" fill="url(#background)"/>
+  <path d="M875-100c113 27 244 116 361 258v209C1061 207 915 137 792 145Z" fill="#ECE4F0" opacity=".5"/>
+  <path d="M1041-19c75 46 148 107 221 188" stroke="#E3D8E8" stroke-width="1"/>
+
+  <!-- Wordmark. All artwork is code-native vector. -->
+  <rect x="56" y="39" width="41" height="43" rx="12" fill="#654666"/>
+  <path d="M78 48H69a2 2 0 0 0-2 2v22a2 2 0 0 0 2 2h15a2 2 0 0 0 2-2V56l-8-8Z" stroke="#FFF" stroke-width="1.5" stroke-linejoin="round"/>
+  <path d="M78 48v8h8M72 62h9M72 67h7" stroke="#FFF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="110" y="63" class="ink" font-size="27" font-weight="650" letter-spacing="-.8">Formwork</text>
+  <text x="111" y="82" class="muted" font-size="11">The answers were already there.</text>
+
+  <rect x="937" y="47" width="207" height="30" rx="15" fill="#F1EBF3" stroke="#E1D6E6"/>
+  <circle cx="954" cy="62" r="3" fill="#98759F"/>
+  <text x="966" y="66" class="plum eyebrow" font-size="9">HERMES DESKTOP PLUGIN</text>
+
+  <text x="57" y="157" class="serif ink" font-size="53" letter-spacing="-1.8">Your documents already</text>
+  <text x="57" y="212" class="serif ink" font-size="53" letter-spacing="-1.8">have the answers.</text>
+  <text x="59" y="251" class="muted" font-size="16">Fill the original. See the source. Review before export.</text>
+
+  <!-- Original forms -->
+  <g filter="url(#shadow)">
+    <rect x="56.5" y="293.5" width="337" height="250" rx="15.5" fill="url(#paper)" stroke="#E5DFE8"/>
+  </g>
+  <rect x="77" y="314" width="27" height="23" rx="7" fill="#F0EAF1"/>
+  <text x="90.5" y="329.5" text-anchor="middle" class="plum" font-size="10" font-weight="650">01</text>
+  <text x="116" y="331" class="ink" font-size="19" font-weight="600" letter-spacing="-.35">Original forms</text>
+  <text x="78" y="357" class="muted" font-size="11">Your PDF. Its layout. Its real fields.</text>
+  <rect x="78" y="376" width="294" height="147" rx="8" fill="#FCFBFD" stroke="#E7DFEA"/>
+  <path d="M92 392h89" stroke="#B7A5C0" stroke-width="5" stroke-linecap="round"/>
+  <text x="94" y="416" class="muted" font-size="8.5">FULL NAME</text>
+  <rect x="92" y="424" width="266" height="28" rx="4" fill="#FFF" stroke="#B7A0C4"/>
+  <text x="102" y="442" class="ink" font-size="10.5">Alex Rowan</text>
+  <text x="94" y="471" class="muted" font-size="8.5">COMPANY</text>
+  <rect x="92" y="479" width="266" height="28" rx="4" fill="#FFF" stroke="#D7CBDD"/>
+  <text x="102" y="497" class="ink" font-size="10.5">Northwind Studio</text>
+
+  <!-- Source-linked review -->
+  <g filter="url(#shadow)">
+    <rect x="431.5" y="293.5" width="337" height="250" rx="15.5" fill="url(#paper)" stroke="#E5DFE8"/>
+  </g>
+  <rect x="452" y="314" width="27" height="23" rx="7" fill="#F0EAF1"/>
+  <text x="465.5" y="329.5" text-anchor="middle" class="plum" font-size="10" font-weight="650">02</text>
+  <text x="491" y="331" class="ink" font-size="19" font-weight="600" letter-spacing="-.35">Source-linked answers</text>
+  <text x="453" y="357" class="muted" font-size="11">A proposed answer. An inspectable source.</text>
+  <text x="453" y="389" class="muted" font-size="9">COMPANY</text>
+  <text x="453" y="413" class="ink" font-size="17" font-weight="550">Northwind Studio</text>
+  <path d="M453 431h294v44H453Z" fill="#F6F2F8"/>
+  <path d="M453 431v44" stroke="#B49AC1" stroke-width="2"/>
+  <text x="466" y="458" class="serif" fill="#64536B" font-size="13">“Company: Northwind Studio”</text>
+  <path d="M454 489v11h8v-8l-3-3h-5Zm5 0v3h3" stroke="#8F769A" stroke-width="1.1" stroke-linejoin="round"/>
+  <text x="470" y="498" class="muted" font-size="10">Supporting facts.pdf · page 1</text>
+  <rect x="635" y="490" width="113" height="24" rx="6" fill="#EAF5EF"/>
+  <path d="m645 502 3 3 5-6" stroke="#317360" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="659" y="505" class="green" font-size="9" font-weight="600">Reviewed by you</text>
+
+  <!-- Verified exports -->
+  <g filter="url(#shadow)">
+    <rect x="806.5" y="293.5" width="337" height="250" rx="15.5" fill="url(#paper)" stroke="#E5DFE8"/>
+  </g>
+  <rect x="827" y="314" width="27" height="23" rx="7" fill="#F0EAF1"/>
+  <text x="840.5" y="329.5" text-anchor="middle" class="plum" font-size="10" font-weight="650">03</text>
+  <text x="866" y="331" class="ink" font-size="19" font-weight="600" letter-spacing="-.35">Verified exports</text>
+  <text x="828" y="357" class="muted" font-size="11">Filled PDFs, checked before they leave.</text>
+  <rect x="828" y="378" width="294" height="57" rx="8" fill="#FFF" stroke="#E7DFEA"/>
+  <path d="M847 392h9l5 5v22h-17v-27h3Zm9 0v5h5M848 404h9M848 409h7" stroke="#8C7396" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="875" y="402" class="ink" font-size="11.5" font-weight="550">Application-filled.pdf</text>
+  <text x="875" y="419" class="muted" font-size="9.5">A new file. Your original stays untouched.</text>
+  <rect x="828" y="447" width="294" height="57" rx="8" fill="#FFF" stroke="#E7DFEA"/>
+  <path d="M844 465h7l3 3h9v17h-19v-20Z" stroke="#8C7396" stroke-width="1.3" stroke-linejoin="round"/>
+  <text x="875" y="472" class="ink" font-size="11.5" font-weight="550">Completed-packet.zip</text>
+  <text x="875" y="489" class="muted" font-size="9.5">Filled forms + a clear review record.</text>
+  <circle cx="1100" cy="406" r="10" fill="#EAF5EF"/>
+  <circle cx="1100" cy="475" r="10" fill="#EAF5EF"/>
+  <path d="m1096 406 3 3 5-6M1096 475l3 3 5-6" stroke="#317360" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Small connective arrows keep the workflow legible. -->
+  <circle cx="412.5" cy="419" r="12" fill="#F4EFF6" stroke="#E5DDE9"/>
+  <path d="M408 419h9m-4-4 4 4-4 4" stroke="#9C81A7" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="787.5" cy="419" r="12" fill="#F4EFF6" stroke="#E5DDE9"/>
+  <path d="M783 419h9m-4-4 4 4-4 4" stroke="#9C81A7" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <path d="M57 576h1086" stroke="#E4DDE7"/>
+  <text x="58" y="600" class="muted" font-size="11">Source-backed PDF form completion, inside Hermes.</text>
+  <text x="1143" y="600" text-anchor="end" class="plum eyebrow" font-size="9">LESS RETYPING. MORE DONE.</text>
+</svg>

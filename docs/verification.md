@@ -1,58 +1,88 @@
-# Verification plan
+# Verification record
 
-This is the release checklist. Completed checks are recorded at the end; unchecked items remain requirements rather than claims.
+This record separates completed checks from release work that remains open. A passing local test or isolated model call does not establish that the installed native workflow works from import through download.
 
-## Packet behavior
+## Completed checks
 
-- Import multiple forms and sources in one request. Preserve each original file byte for byte.
-- Persist a packet, construct a new store instance, and verify that files, proposed answers, user corrections, and provenance survive.
-- Give every form and source its own identifier. Duplicate filenames must not overwrite another document.
-- Treat uploaded names as display labels. Reject traversal, oversized payloads, invalid base64, and unsupported content without leaving a partially usable packet.
-- Keep field updates confined to the requested packet, form, and field. Unknown identifiers must not create arbitrary fields or access paths outside packet storage.
-- Keep user corrections when a later extraction completes. An outdated result must not silently overwrite newer review work.
-- Expose asynchronous extraction status, including a useful failure result. A failed model request must leave manual review and export usable.
+Results below were recorded on November 10, 2026.
 
-## AcroForm correctness
+| Check | Observed result | Scope |
+| --- | --- | --- |
+| Current project suite, Python 3.12 | **52 passed: 22 engine and 30 packet tests** | Real original PDF fixtures and controlled model facades. This is the latest combined local result. |
+| Hermes runtime, Python 3.14 | **45 passed on an earlier suite snapshot** | The latest 52-test suite has not yet been rerun in this runtime. |
+| Minimum PDF-library version | **22 engine tests passed with pypdf 6.19.0** | Tested in an isolated dependency directory without changing the project environment. The project engine suite also passed with pypdf 6.21.4 and PDFium 5.15.2. |
+| Clean Hermes validation | **`hermes plugins validate --install-deps` passed** | Hermes v0.23.1; exact first commit `e4e624263d7f9bcb1367ba6ce04656bf89f822cc`. Changes after that commit require another validation before the release is pinned. |
+| Backend import | **Passed** | An isolated `python -I` process loaded `dashboard/plugin_api.py` by absolute path and discovered its seven routes. This checks import behavior, not authenticated route mounting by itself. |
 
-Inspect both the canonical `/AcroForm/Fields` tree and page `/Widget` annotations. Values can look correct in one representation while being stale or missing in the other.
+### PDF engine
 
-1. Import text, multiline, checkbox, and supported choice-field examples. Treat unsupported radio, signature, XFA, malformed, or ambiguous fields explicitly.
-2. Fill all pages using fully qualified field names. Preserve unrelated existing values.
-3. Export to a new PDF and reopen it with an independent reader.
-4. Confirm expected fields and exact `/V` values, including non-ASCII text where supported.
-5. Check the effective values of every affected widget, including parent inheritance and repeated widgets.
-6. Confirm updated widgets have nonempty normal appearance streams.
-7. Render the exported pages with PDFium and inspect visible values, page rotation, clipping, line wrapping, checkbox state, and alignment. Reading `/V` alone is insufficient.
-8. Open the exported PDF in an external viewer during the final integration check.
+The engine tests exercise actual PDFs rather than only mocked PDF operations. Coverage includes text and multiline fields, checkboxes, supported single-select combo boxes, fields on separate pages, nested canonical names, repeated widgets, page rotation, and choice export values that differ from their displayed labels.
 
-Never repair ambiguous duplicate field trees blindly. Never flatten a signed form. Preserve editable fields by default unless a static export is an explicit supported option.
+Export checks reopen the saved PDF and compare canonical field values with effective widget values. They inspect and render the saved appearance streams, check visible text and clipping, and render the complete pages. They also compare original-file hashes, page content and geometry, untouched values and appearances, and field flags. Output remains editable. Failed verification does not publish the candidate PDF.
 
-## Evidence and unanswered questions
+Negative controls cover unsupported characters, overflow, invalid values, source or output replacement, ambiguous orphan widgets, XFA, radio fields, encrypted PDFs and signed PDFs. Empty signature widgets are preserved as manual work and excluded from editable fields; an exported document with a remaining manual signature is not marked complete.
 
-- A model proposal must name an imported source, an existing page, and a quote actually present in that page's extracted text, allowing only documented whitespace normalization.
-- Reject invented citations and invalid pages. Keep an unsupported answer visibly unsourced rather than attaching a plausible-looking source.
-- Distinguish absence of evidence from a negative answer.
-- Show conflicting evidence for review instead of selecting one fact silently.
-- Ask for a repeated missing fact once only if the implementation actually groups equivalent fields; otherwise do not advertise this behavior.
-- Numeric totals should be calculated deterministically from reviewed amounts. Check currency, decimal separators, negative amounts, duplicates, and rounding if receipt aggregation ships.
+Three related text-widget regression PDFs from Mozilla's PDF.js repository were filled successfully and their rendered results were inspected. This is limited compatibility evidence, not three independent ordinary business forms. The pdf-lib character-sheet example was refused because of its image-upload pushbuttons and interactive actions. OPM SF-182 was also refused: its empty signature widgets are now preserved, but its pushbuttons and interactive formatting actions remain outside the accepted scope. See [external test sources](test-sources.md).
 
-## Native integration
+Text export currently accepts printable ASCII. These results do not establish arbitrary PDF, font, scan or language compatibility.
 
-- Install into a clean Hermes profile and run `hermes plugins validate` on the exact commit to be submitted.
-- Confirm the Desktop contribution loads through `@hermes/plugin-sdk` and appears under the expected plugin entry.
-- Exercise upload, extraction, value edits, original/source rendering, export, and native Save through the installed plugin, not only a standalone development server.
-- Test gateway/profile switching while requests are active. A download must retain the connection and profile that produced it.
-- Reopen the workspace after a restart. Disable the plugin and confirm contributed UI and event listeners dispose cleanly.
-- Verify narrow-window layout and keyboard access to the primary actions.
+### Packet behavior
 
-## Demo acceptance
+The 30 packet tests cover original-file preservation, persistent packet state, distinct storage identifiers for duplicate filenames, atomic imports and edits, invalid uploads and identifiers, source-linked proposals, invalid citation refusal, conflicting evidence, explicit review, stale extraction results, and preservation of user corrections.
 
-Use fictional data and original fixtures. Show a genuine two-form packet, a source-backed answer, a missing fact answered once if implemented, and completed original PDFs opening outside the plugin. Keep the posted video under 90 seconds. State any time compression or replay plainly.
+They also cover editable export, previews reflecting saved values, the review manifest, optional inclusion of exact source files in the ZIP, asynchronous job context and error handling, retry after extraction setup failure, bounded retries around brief Windows publication locks, and starting a new packet while preserving earlier originals, exports and metadata.
 
-## Release record
+Model facades in these tests are controlled test implementations. Their responses must not appear in a demo as if a real provider generated them.
 
-- November 10: `.venv/Scripts/python.exe -m pytest tests/test_packet.py -q` passed **23 tests**. These use original synthetic PDFs and controlled test model facades. They cover source-backed proposals, evidence refusal, conflicts, explicit review, stale extraction, packet persistence, atomic uploads and edits, editable PDF export, original-file hashes, preview changes, opt-in source ZIP attachments, asynchronous job context/error handling, and starting a new packet while preserving old originals, exports, and metadata.
-- November 10: an isolated `python -I` process loaded `dashboard/plugin_api.py` by its absolute path with `runpy.run_path`, discovering all seven routes without relying on the working directory or installing Formwork itself. This checks backend import behavior, not Hermes's authenticated route mounting.
-- November 10: the combined local engine and packet suite passed 42 tests before the subsequent opt-in attachment test was added. The final release must record a fresh combined result after all changes.
+## Native Hermes observations
 
-Pending: actual Hermes validation on the release commit, installed Desktop smoke test, a live configured-model extraction, exported-page visual inspection, clean-install validation, and final platform/version claims. No test model response should appear as a live model call in a demo.
+The current Formwork workspace has loaded in Hermes Desktop. The following actions have been observed through the installed native contribution:
+
+- Opening the folder picker.
+- Importing the four original synthetic forms and four source PDFs.
+- Viewing original-form previews.
+- Persisting and reopening the packet.
+- Completing a genuine asynchronous model extraction and displaying its 20 proposals in the native workspace.
+- Approving all 20 sourced proposals through the review dialog.
+- Entering `Vegetarian` for the workshop dietary field, then explicitly selecting and updating the matching venue field.
+- Saving photograph consent as an explicit unchecked user decision, bringing the packet to 23 reviewed fields.
+- Exporting four filled PDFs and a ZIP with supporting source attachments disabled.
+- Saving the actual ZIP through native Save to `output/native-demo/completed-packet.zip`.
+
+The complete native demonstration workflow has now been exercised from import through the saved ZIP. The actual downloaded speaker form was subsequently opened in Chrome's PDF viewer and its visible values and editable fields were checked. The remaining final release checks are listed below.
+
+## Configured-model extraction and proposal audit
+
+An earlier genuine isolated `PluginContext` call used the current extraction input and profile and returned 20 proposals. That isolated result was not applied to the packet and was not counted as native integration success.
+
+The native asynchronous RPC path subsequently succeeded for job `4d27117440ca4fba8d9fe7bca07e36ba`, using provider `nous` and model `openai/gpt-6.1-sol`. It persisted **20 proposals** at packet revision **3**, and those proposals were visible in the native UI. Earlier native attempts had returned provider HTTP 400; they remain failed attempts rather than successful demo runs.
+
+A separate read-only audit called `PacketStore.packet()` through the backend API module. All 20 proposed values matched the fictional source facts used by `examples/make_demo.py`. Every cited quote occurred literally on its recorded source page and contained the proposed value. The eight imported document hashes matched the original demonstration PDFs. No semantic error was found in this one synthetic packet.
+
+At that pre-review checkpoint, the proposals consisted of six speaker-profile answers, six supplier-onboarding answers, four venue-access answers and four workshop-registration answers. The two dietary-requirement fields remained empty. Photograph consent remained an untouched checkbox with `origin: ""` and `status: "empty"`, not a reviewed negative answer. The packet's public JSON digest was unchanged before and after the audit.
+
+This establishes genuine native extraction and a checked demonstration result for this packet, not accuracy on other documents.
+
+## Actual downloaded export audit
+
+After native review, the persisted packet was at revision **8**, with all **23 fields** marked as reviewed user values. A separate audit checked the actual native download, not replacement PDFs produced by a test script. It did not modify packet state.
+
+The downloaded ZIP's SHA-256 was `b4e9c2714c2c77b323f0c036fb64059b114a07b7fd36909d3610d6bf88c3d93e`, identical to the ZIP published by the packet store. Its five members were four completed PDFs and `review.json`; no supporting source PDFs were included. Member paths, duplicate destinations, link attributes and size limits were checked before extraction beneath `output/native-demo/unpacked`.
+
+Each downloaded PDF matched its published and manifest SHA-256. Reopening the files confirmed retained AcroForm fields, all 23 expected canonical values, agreeing effective widget values, and nonempty saved normal appearance streams. The photograph-consent field had `/V` and `/AS` set to `/Off`. All four documents remained editable, and their original page-content streams were preserved. The review manifest matched the persisted reviewed fields and recorded source inclusion as false.
+
+The eight stored original documents still matched both their imported hashes and the original demonstration PDFs. The packet's public JSON digest was unchanged before and after the audit.
+
+All four actual downloaded output pages were rendered to PNGs under `output/native-demo/renders` and visually inspected. The expected values were visible and aligned, the biography wrapped across two lines, both dietary fields showed `Vegetarian`, and photograph consent was visibly unchecked. No clipping or missing text was observed. The local audit details are in `output/native-demo/download-audit.json`.
+
+The actual downloaded speaker form was also opened in Chrome's PDF viewer. Its filled values and editable fields were checked there; this is separate from the PDFium rendering audit above. This external-viewer observation covers that downloaded form, not every possible PDF viewer or document.
+
+## Remaining release checks
+
+- Validate the final release commit with dependencies from a clean Hermes profile, then pin that exact commit in the catalog entry.
+- Finish checking native extraction progress, failure recovery and preservation of existing review work around retries and later edits.
+- Check profile/connection handling, plugin disable/disposal, narrow-window layout and primary keyboard actions.
+- Record and inspect the actual-screen demonstration using fictional documents. Show genuine model results and make any cut around waiting or repetitive review apparent.
+- Publish the demo post, open the catalog PR and submit both links through the entry form. These publication and submission steps remain pending.
+
+The current 52-test suite also passed in the Hermes Python 3.14 runtime. Receipt arithmetic, signing, service submission and universal PDF compatibility are outside this release. A source quote establishes provenance for a proposed value; it does not establish that the source is current or that the interpretation is correct.

@@ -219,6 +219,7 @@ def test_host_bound_model_job_inherits_context_and_persists_results(packet, monk
     scope = contextvars.ContextVar("test_formwork_scope")
     scope.set("selected-profile")
     calls = []
+    tasks = []
 
     def complete(**kwargs):
         calls.append((scope.get(), kwargs))
@@ -226,6 +227,7 @@ def test_host_bound_model_job_inherits_context_and_persists_results(packet, monk
 
     handlers = {}
     ctx = SimpleNamespace(llm=SimpleNamespace(complete_structured=complete),
+                          register_auxiliary_task=lambda name, **kwargs: tasks.append((name, kwargs)),
                           register_rpc=lambda name, handler: handlers.update({name: handler}))
     monkeypatch.setattr(runtime, "data_root", lambda: store.root)
     runtime.register_extraction(ctx)
@@ -234,6 +236,10 @@ def test_host_bound_model_job_inherits_context_and_persists_results(packet, monk
     assert finished["status"] == "completed"
     assert calls[0][0] == "selected-profile"
     assert calls[0][1]["purpose"] == "formwork.extract"
+    assert calls[0][1]["task"] == "formwork_extract"
+    assert tasks == [("formwork_extract", {"display_name": "Formwork extraction",
+                                           "description": "Read original form labels and propose source-backed answers.",
+                                           "inherit_from": "vision", "defaults": {"timeout": 120}})]
     assert not {"provider", "model", "agent_id", "profile"}.intersection(calls[0][1])
     assert field(store.packet())["value"] == "Alex Rowan"
     assert field(store.packet())["origin"] == "model"
@@ -248,6 +254,7 @@ def test_failed_host_model_job_returns_no_secret_response_and_keeps_packet(packe
 
     handlers = {}
     ctx = SimpleNamespace(llm=SimpleNamespace(complete_structured=complete),
+                          register_auxiliary_task=lambda name, **kwargs: None,
                           register_rpc=lambda name, handler: handlers.update({name: handler}))
     monkeypatch.setattr(runtime, "data_root", lambda: store.root)
     runtime.register_extraction(ctx)
@@ -282,3 +289,118 @@ def test_new_packet_archives_everything_without_erasing_files_or_reusing_revisio
         store.apply_proposals([proposal(state)], expected_revision=state["revision"])
     assert store.packet() == current
     assert PacketStore(store.root).packet() == current
+
+
+@pytest.mark.parametrize("failure_point", ["data_root", "PacketStore", "_write_job"])
+def test_extraction_setup_failure_releases_slot_for_a_real_retry(packet, monkeypatch, failure_point):
+    from formwork import runtime
+    store, state, _, _ = packet
+    calls = []
+
+    def complete(**kwargs):
+        calls.append(kwargs)
+        return SimpleNamespace(parsed={"proposals": [proposal(state)]}, model="test-model", provider="test-provider")
+
+    handlers = {}
+    ctx = SimpleNamespace(llm=SimpleNamespace(complete_structured=complete),
+                          register_auxiliary_task=lambda name, **kwargs: None,
+                          register_rpc=lambda name, handler: handlers.update({name: handler}))
+    monkeypatch.setattr(runtime, "data_root", lambda: store.root)
+    original = getattr(runtime, failure_point)
+    attempted = False
+
+    def fail_once(*args, **kwargs):
+        nonlocal attempted
+        if not attempted:
+            attempted = True
+            raise OSError("Simulated packet setup failure")
+        return original(*args, **kwargs)
+
+    monkeypatch.setattr(runtime, failure_point, fail_once)
+    runtime.register_extraction(ctx)
+    with pytest.raises(OSError, match="Simulated packet setup failure"):
+        handlers["extract"]({})
+    assert calls == []
+    started = handlers["extract"]({})
+    finished = wait_for_job(runtime, store.root, started["jobId"])
+    assert finished["status"] == "completed"
+    assert len(calls) == 1
+    assert field(store.packet())["value"] == "Alex Rowan"
+
+
+def test_job_publication_retries_brief_windows_target_locks(tmp_path, monkeypatch):
+    from formwork import runtime
+    original = Path.replace
+    attempts = 0
+
+    def briefly_locked(path, target):
+        nonlocal attempts
+        attempts += 1
+        if attempts < 3:
+            raise PermissionError("Simulated Windows read lock")
+        return original(path, target)
+
+    monkeypatch.setattr(Path, "replace", briefly_locked)
+    runtime._write_job(tmp_path, "a" * 32, {"status": "completed"})
+    assert attempts == 3
+    assert runtime.job_status(tmp_path, "a" * 32)["status"] == "completed"
+    assert not list((tmp_path / "jobs").glob("*.tmp"))
+
+
+def test_job_publication_lock_retries_are_bounded(tmp_path, monkeypatch):
+    from formwork import runtime
+    attempts = 0
+
+    def always_locked(path, target):
+        nonlocal attempts
+        attempts += 1
+        raise PermissionError("Persistent file lock")
+
+    monkeypatch.setattr(Path, "replace", always_locked)
+    monkeypatch.setattr(runtime.time, "sleep", lambda _: None)
+    with pytest.raises(PermissionError):
+        runtime._write_job(tmp_path, "a" * 32, {"status": "completed"})
+    assert attempts == 8
+    assert not list((tmp_path / "jobs").glob("*.tmp"))
+
+
+def test_job_poll_retries_brief_windows_replacement_locks(tmp_path, monkeypatch):
+    from formwork import runtime
+    runtime._write_job(tmp_path, "a" * 32, {"status": "completed"})
+    original = Path.read_text
+    attempts = 0
+
+    def briefly_locked(path, *args, **kwargs):
+        nonlocal attempts
+        attempts += 1
+        if attempts < 3:
+            raise PermissionError("Simulated Windows replacement lock")
+        return original(path, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "read_text", briefly_locked)
+    assert runtime.job_status(tmp_path, "a" * 32)["status"] == "completed"
+    assert attempts == 3
+
+
+def test_failure_diagnostic_selects_safe_metadata_without_provider_content():
+    from formwork import runtime
+    failure = RuntimeError("private response sk-never-return-this")
+    failure.status_code = 400
+    failure.body = {"error": {"code": "unsupported_value", "param": "messages[1].content[2]",
+                              "type": "invalid_request_error", "message": "private response sk-never-return-this"}}
+    failure.request = SimpleNamespace(content=json.dumps({"model": "openai/gpt-6.1-sol",
+                                                         "messages": [{"content": "private source document"}],
+                                                         "api_key": "sk-never-return-this"}).encode())
+    try:
+        raise failure
+    except RuntimeError as caught:
+        diagnostic = runtime._failure_diagnostic(caught)
+    assert diagnostic["status_code"] == 400
+    assert diagnostic["code"] == "unsupported_value"
+    assert diagnostic["param"] == "messages.1.content.2"
+    assert diagnostic["type"] == "invalid_request_error"
+    assert diagnostic["requestModelParts"] == ["openai", "gpt-6.1-sol"]
+    assert diagnostic["frames"][-1]["file"] == "test_packet.py"
+    assert "sk-never-return-this" not in json.dumps(diagnostic)
+    assert "private source document" not in json.dumps(diagnostic)
+    assert "private response" not in json.dumps(diagnostic)
